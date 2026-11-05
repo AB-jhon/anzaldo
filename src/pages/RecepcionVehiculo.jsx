@@ -108,7 +108,7 @@ export default function RecepcionVehiculo() {
   }
 
   return (
-    <div className="flex flex-col lg:flex-row min-h-screen bg-[#F4F6F8]">
+    <div className="flex flex-col md:flex-row min-h-screen bg-[#F4F6F8]">
       {/* 1. Menú Lateral */}
       <Sidebar />
 
