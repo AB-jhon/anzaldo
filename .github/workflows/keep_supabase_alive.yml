@@ -1,0 +1,17 @@
+name: Mantener Supabase Activo
+
+on:
+  schedule:
+    # Corre automáticamente todos los días a las 00:00 UTC
+    - cron: '0 0 * * *'
+  workflow_dispatch: # Activa el botón para ejecutarlo manualmente
+
+jobs:
+  ping_db:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Consultar tabla clientes
+        run: |
+          curl -X GET "${{ secrets.SUPABASE_URL }}/rest/v1/clientes?select=id_cliente&limit=1" \
+          -H "apikey: ${{ secrets.SUPABASE_KEY }}" \
+          -H "Authorization: Bearer ${{ secrets.SUPABASE_KEY }}"
