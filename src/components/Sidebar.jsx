@@ -7,7 +7,7 @@ export default function Sidebar() {
   return (
     <>
       {/* 1. Barra superior para móviles (con botón de hamburguesa) */}
-      <div className="md:hidden flex items-center justify-between px-4 py-3 bg-[#3b6084] text-white w-full sticky top-0 z-50 shadow-md">
+      <div className="lg:hidden flex items-center justify-between px-4 py-3 bg-[#3b6084] text-white w-full sticky top-0 z-50 shadow-md">
         <span className="font-bold text-sm">Sistema Anzaldo</span>
         <button 
           onClick={() => setIsOpen(!isOpen)} 
@@ -21,16 +21,16 @@ export default function Sidebar() {
       {isOpen && (
         <div 
           onClick={() => setIsOpen(false)}
-          className="fixed inset-0 bg-black/50 z-40 md:hidden"
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
         />
       )}
 
       {/* 3. Panel Lateral (Sidebar) */}
       <aside className={`
-        fixed md:static inset-y-0 left-0 z-50 
+        fixed lg:static inset-y-0 left-0 z-50 
         w-64 bg-[#3b6084] text-white min-h-screen p-4 flex flex-col justify-between shrink-0
-        transform transition-transform duration-300 ease-in-out shadow-2xl md:shadow-none
-        ${isOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0
+        transform transition-transform duration-300 ease-in-out shadow-2xl lg:shadow-none
+        ${isOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0
       `}>
         <div className="space-y-6">
           <div className="flex items-center space-x-3 px-2 py-3 border-b border-white/10">
