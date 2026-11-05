@@ -1,18 +1,26 @@
 import React, { useState } from 'react';
-import { Menu, X, Car, FileText, Plus, Users } from 'licide-react'; 
+import { Menu, X, Car, FileText, Plus, Users } from 'lucide-react';
 
 export default function Sidebar() {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
     <>
-   {/* Barra superior móvil */}
-    <div className="md:hidden flex items-center justify-between px-4 py-3 bg-[#3b6084] text-white w-full sticky top-0 z-50 shadow-md">
+      {/* Barra superior móvil */}
+      <div className="md:hidden flex items-center justify-between px-4 py-3 bg-[#3b6084] text-white w-full sticky top-0 z-50 shadow-md">
         <span className="font-bold text-sm">Sistema Anzaldo</span>
         <button onClick={() => setIsOpen(!isOpen)} className="p-2 rounded-lg bg-white/10 text-white">
           {isOpen ? <X size={24} /> : <Menu size={24} />}
         </button>
       </div>
+
+      {/* Overlay oscuro para cerrar el menú en móvil */}
+      {isOpen && (
+        <div 
+          onClick={() => setIsOpen(false)}
+          className="fixed inset-0 bg-black/50 z-40 md:hidden transition-opacity"
+        />
+      )}
 
       {/* Menú lateral */}
       <aside className={`
