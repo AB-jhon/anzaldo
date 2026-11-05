@@ -1,28 +1,31 @@
 import React, { useState } from 'react';
-import { Menu, X, Car, FileText, Plus, Users } from 'lucide-react';
+import { Car, FileText, Plus, Users, Menu, X } from 'lucide-react';
 
 export default function Sidebar() {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
     <>
-      {/* Barra superior móvil */}
+      {/* 1. Barra superior para móviles (con botón de hamburguesa) */}
       <div className="md:hidden flex items-center justify-between px-4 py-3 bg-[#3b6084] text-white w-full sticky top-0 z-50 shadow-md">
         <span className="font-bold text-sm">Sistema Anzaldo</span>
-        <button onClick={() => setIsOpen(!isOpen)} className="p-2 rounded-lg bg-white/10 text-white">
+        <button 
+          onClick={() => setIsOpen(!isOpen)} 
+          className="p-2 rounded-lg bg-white/10 text-white focus:outline-none"
+        >
           {isOpen ? <X size={24} /> : <Menu size={24} />}
         </button>
       </div>
 
-      {/* Overlay oscuro para cerrar el menú en móvil */}
+      {/* 2. Fondo oscuro translúcido (al hacer clic fuera, cierra el menú) */}
       {isOpen && (
         <div 
           onClick={() => setIsOpen(false)}
-          className="fixed inset-0 bg-black/50 z-40 md:hidden transition-opacity"
+          className="fixed inset-0 bg-black/50 z-40 md:hidden"
         />
       )}
 
-      {/* Menú lateral */}
+      {/* 3. Panel Lateral (Sidebar) */}
       <aside className={`
         fixed md:static inset-y-0 left-0 z-50 
         w-64 bg-[#3b6084] text-white min-h-screen p-4 flex flex-col justify-between shrink-0
@@ -31,7 +34,11 @@ export default function Sidebar() {
       `}>
         <div className="space-y-6">
           <div className="flex items-center space-x-3 px-2 py-3 border-b border-white/10">
-            <img src="/Logo.png" alt="Logo Anzaldo" className='h-12 w-auto object-contain' />
+            <img
+              src="/Logo.png"
+              alt="Logo Anzaldo"
+              className='h-12 w-auto object-contain'
+            />
           </div>
 
           <nav className="space-y-1.5 text-sm font-medium" onClick={() => setIsOpen(false)}>
