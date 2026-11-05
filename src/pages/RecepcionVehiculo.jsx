@@ -113,7 +113,7 @@ export default function RecepcionVehiculo() {
       <Sidebar />
 
       {/* 2. Área de Trabajo Principal */}
-      <main className="flex-1 p-8 space-y-6 overflow-y-auto">
+      <main className="flex-1 p-4 md:p-8 space-y-6 overflow-y-auto w-full">
         {/* Encabezado Superior */}
         <div className="flex justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-slate-200">
           <h1 className="text-xl font-bold text-slate-800">
