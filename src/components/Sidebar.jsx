@@ -58,7 +58,7 @@ export default function Sidebar() {
         </div>
 
         <div className="text-xs text-slate-300 text-center py-2 border-t border-white/10">
-          Sistema Anzaldo v2.0
+          Sistema Anzaldo v1.0
         </div>
       </aside>
     </>

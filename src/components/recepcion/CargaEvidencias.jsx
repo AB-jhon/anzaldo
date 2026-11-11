@@ -1,22 +1,74 @@
 import React, { useState, useEffect, useRef } from 'react'
 
+// Función auxiliar para comprimir la imagen antes de guardarla en el estado
+const comprimirImagen = (file) => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = (event) => {
+      const img = new Image();
+      img.src = event.target.result;
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const MAX_WIDTH = 1200; // Ancho máximo razonable para vistas web
+        const MAX_HEIGHT = 1200;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > MAX_WIDTH) {
+            height *= MAX_WIDTH / width;
+            width = MAX_WIDTH;
+          }
+        } else {
+          if (height > MAX_HEIGHT) {
+            width *= MAX_HEIGHT / height;
+            height = MAX_HEIGHT;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+
+        // Convertir a Blob/File con calidad comprimida (0.7 = 70% de calidad visual óptima)
+        canvas.toBlob(
+          (blob) => {
+            const compressedFile = new File([blob], file.name, {
+              type: 'image/jpeg',
+              lastModified: Date.now(),
+            });
+            resolve(compressedFile);
+          },
+          'image/jpeg',
+          0.7 
+        );
+      };
+      img.onerror = (error) => reject(error);
+    };
+    reader.onerror = (error) => reject(error);
+  });
+};
+
 export default function CargaEvidencias({ onfotosChange, fotosIniciales = [] }) {
   // Estado local autónomo para las fotos
-  const [fotos, setFotos] = useState (fotosIniciales)
+  const [fotos, setFotos] = useState(fotosIniciales)
+  const [procesando, setProcesando] = useState(false)
 
   // Referencia a los inputs invisibles
   const inputCamaraRef = useRef(null)
   const inputGaleriaRef = useRef(null)
 
   // Notificar al padre cada vez que cambien las fotos
-  useEffect( () => {
+  useEffect(() => {
     if (onfotosChange) {
-      onfotosChange (fotos)
+      onfotosChange(fotos)
     }
   }, [fotos])
 
-  // Manejador unificado para procesar imágenes capturadas o seleccionadas
-  const handleProcesarFotos = (e) => {
+  // Manejador unificado para procesar, comprimir y optimizar imágenes
+  const handleProcesarFotos = async (e) => {
     const archivos = Array.from(e.target.files)
     if (archivos.length === 0) return
 
@@ -25,21 +77,37 @@ export default function CargaEvidencias({ onfotosChange, fotosIniciales = [] }) 
     const archivosAceptados = archivos.slice(0, fotosDisponibles)
     const etiquetasPorDefecto = ['Frente', 'Lado Izq', 'Lado Der', 'Tablero', 'Trasera', 'Extra']
 
-    const nuevasFotos = archivosAceptados.map((archivo, index) => {
-      // Asignación de etiqueta por defecto según la posición
-      const posicionActual = fotos.length + index
+    setProcesando(true)
 
-      return {
-        id: Date.now() + index,
-        file: archivo,
-        previewUrl: URL.createObjectURL(archivo),
-        etiqueta: etiquetasPorDefecto[posicionActual] || `Foto ${posicionActual + 1}`
+    try {
+      const nuevasFotos = []
+
+      for (let index = 0; index < archivosAceptados.length; index++) {
+        const archivo = archivosAceptados[index]
+        
+        // 1. Comprimimos la imagen para reducir drásticamente su peso en KB
+        const archivoOptimizado = await comprimirImagen(archivo)
+        
+        // 2. Posición actual para las etiquetas
+        const posicionActual = fotos.length + nuevasFotos.length
+
+        nuevasFotos.push({
+          id: Date.now() + index,
+          file: archivoOptimizado, // Archivo optimizado listo para Supabase Storage
+          previewUrl: URL.createObjectURL(archivoOptimizado),
+          etiqueta: etiquetasPorDefecto[posicionActual] || `Foto ${posicionActual + 1}`
+        })
       }
-    })
 
-    setFotos((prevFotos) => [...prevFotos, ...nuevasFotos])
-    // Limpia el input para permitir volver a seleccionar la misma imagen
-    e.target.value = ''
+      setFotos((prevFotos) => [...prevFotos, ...nuevasFotos])
+    } catch (error) {
+      console.error('Error al procesar las imágenes:', error)
+      alert('Hubo un problema al optimizar las imágenes.')
+    } finally {
+      setProcesando(false)
+      // Limpia el input para permitir volver a seleccionar la misma imagen
+      e.target.value = ''
+    }
   }
 
   // Eliminar una foto y liberar memoria de su URL de objeto
@@ -53,20 +121,27 @@ export default function CargaEvidencias({ onfotosChange, fotosIniciales = [] }) 
     })
   }
 
-    return (
+  return (
     <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 space-y-4">
       <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 text-center">
         Evidencia Fotográfica de Ingreso (Recepción)
       </h3>
 
+      {/* Indicador visual mientras se comprimen las fotos */}
+      {procesando && (
+        <div className="text-center text-xs text-blue-600 font-medium py-1 animate-pulse">
+          Optimizando peso de imágenes...
+        </div>
+      )}
+
       {/* Controles de Selección y Cámara */}
-      {fotos.length < 6 && (
+      {fotos.length < 6 && !procesando && (
         <div className="flex flex-wrap justify-center gap-3">
-          {/* Botón 1: Tomar foto directamente con la Cámara Trasera del Celular/Tablet */}
+          {/* Botón 1: Tomar foto directamente con la Cámara Trasera */}
           <button
             type="button"
             onClick={() => inputCamaraRef.current?.click()}
-            className="flex-1 min-w-[140px] max-w-[200px] bg-blue-700 hover:bg-blue-700 text-white font-bold p-3 rounded-xl flex items-center justify-center gap-2 text-xs shadow-sm transition active:scale-95 cursor-pointer"
+            className="flex-1 min-w-[140px] max-w-[200px] bg-blue-700 hover:bg-blue-800 text-white font-bold p-3 rounded-xl flex items-center justify-center gap-2 text-xs shadow-sm transition active:scale-95 cursor-pointer"
           >
             <span className="text-base">📸</span>
             <span>Tomar Foto</span>
@@ -133,7 +208,7 @@ export default function CargaEvidencias({ onfotosChange, fotosIniciales = [] }) 
           </div>
         ))}
 
-        {fotos.length === 0 && (
+        {fotos.length === 0 && !procesando && (
           <p className="text-xs text-slate-400 italic">No se han adjuntado fotos de evidencia.</p>
         )}
       </div>
