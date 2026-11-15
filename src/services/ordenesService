@@ -1,0 +1,54 @@
+import { supabase } from '../lib/supabaseClient'
+
+export async function guardarOrdenCompleta(vehiculoSeleccionado, datosIngreso, datosConceptos, fotos) {
+  // Paso A: Insertar Cabecera de la Orden
+  const { data: ordenGuardada, error: errOrden } = await supabase
+    .from('ordenes_servicio')
+    .insert([{
+      vin_serie: vehiculoSeleccionado.vin_serie,
+      id_cliente: vehiculoSeleccionado.id_cliente,
+      kilometraje_ingreso: datosIngreso.kilometraje,
+      estatus_orden: datosIngreso.estatusOrden,
+      total: datosConceptos.total
+    }])
+    .select()
+    .single()
+
+  if (errOrden) throw errOrden
+
+  const idOrdenGenerado = ordenGuardada.id_orden
+
+  // Paso B: Insertar el Desglose de Conceptos (Servicios / Refacciones)
+  const conceptosAInsertar = datosConceptos.conceptos.map((c) => ({
+    id_orden: idOrdenGenerado,
+    descripcion: c.descripcion,
+    cantidad: Number(c.cantidad),
+    precio_unitario: Number(c.precio),
+    subtotal: Number(c.cantidad) * Number(c.precio)
+  }))
+
+  const { error: errConceptos } = await supabase
+    .from('detalles_orden')
+    .insert(conceptosAInsertar)
+
+  if (errConceptos) throw errConceptos
+
+  // Paso C: Subir Fotos de Evidencia a Supabase Storage (si existen)
+  if (fotos.length > 0) {
+    for (const foto of fotos) {
+      const fileExt = foto.file.name.split('.').pop()
+      const fileName = `${idOrdenGenerado}/${foto.etiqueta}_${Date.now()}.${fileExt}`
+
+      const { error: errStorage } = await supabase
+        .storage
+        .from('evidencias')
+        .upload(fileName, foto.file)
+
+      if (errStorage) {
+        console.error(`Error al subir imagen ${foto.etiqueta}:`, errStorage.message)
+      }
+    }
+  }
+
+  return idOrdenGenerado
+}

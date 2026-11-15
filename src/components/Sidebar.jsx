@@ -1,8 +1,25 @@
-import React, { useState } from 'react';
-import { Car, FileText, Plus, Users, Menu, X } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Car, FileText, Plus, Users, Menu, X, LogOut, User } from 'lucide-react';
+import { supabase } from '../lib/supabaseClient';
 
 export default function Sidebar() {
   const [isOpen, setIsOpen] = useState(false);
+  const [userEmail, setUserEmail] = useState('');
+
+  // Obtener el correo del usuario logueado en Supabase
+  useEffect(() => {
+    async function obtenerUsuario() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setUserEmail(user.email);
+      }
+    }
+    obtenerUsuario();
+  }, []);
+
+  const handleCerrarSesion = async () => {
+    await supabase.auth.signOut();
+  };
 
   return (
     <>
@@ -11,7 +28,7 @@ export default function Sidebar() {
         <span className="font-bold text-sm">Sistema Anzaldo</span>
         <button 
           onClick={() => setIsOpen(!isOpen)} 
-          className="p-2 rounded-lg bg-white/10 text-white focus:outline-none"
+          className="p-2 rounded-lg bg-white/10 text-white focus:outline-none cursor-pointer"
         >
           {isOpen ? <X size={24} /> : <Menu size={24} />}
         </button>
@@ -32,6 +49,7 @@ export default function Sidebar() {
         transform transition-transform duration-300 ease-in-out shadow-2xl md:shadow-none
         ${isOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0
       `}>
+        {/* PARTE SUPERIOR: Logo y Navegación */}
         <div className="space-y-6">
           <div className="flex items-center space-x-3 px-2 py-3 border-b border-white/10">
             <img
@@ -57,8 +75,26 @@ export default function Sidebar() {
           </nav>
         </div>
 
-        <div className="text-xs text-slate-300 text-center py-2 border-t border-white/10">
-          Sistema Anzaldo v1.0
+        {/* PARTE INFERIOR: Perfil del Usuario y Botón de Salir */}
+        <div className="pt-4 border-t border-white/10 space-y-3">
+          {/* Correo o identificador del usuario activo */}
+          <div className="flex items-center space-x-2 px-2 text-xs text-slate-300 truncate" title={userEmail}>
+            <User size={14} className="shrink-0 text-slate-300" />
+            <span className="font-semibold text-white truncate">{userEmail || 'Admin'}</span>
+          </div>
+
+          {/* Botón de Cerrar Sesión */}
+          <button
+            onClick={handleCerrarSesion}
+            className="w-full flex items-center justify-center space-x-2 bg-red-600/20 hover:bg-red-600/40 text-red-200 border border-red-500/30 text-xs font-bold py-2 px-3 rounded-lg transition cursor-pointer"
+          >
+            <LogOut size={16} />
+            <span>Cerrar Sesión</span>
+          </button>
+
+          <div className="text-[10px] text-slate-400 text-center pt-1">
+            Sistema Anzaldo v1.0
+          </div>
         </div>
       </aside>
     </>
