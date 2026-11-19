@@ -55,7 +55,7 @@ export default function Sidebar() {
             <img
               src="/Logo.png"
               alt="Logo Anzaldo"
-              className='h-12 w-auto object-contain'
+              className='h-15 w-auto object-contain'
             />
           </div>
 
