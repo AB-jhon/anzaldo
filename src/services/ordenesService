@@ -7,18 +7,18 @@ export async function guardarOrdenCompleta(vehiculoSeleccionado, datosIngreso, d
     .insert([{
       vin_serie: vehiculoSeleccionado.vin_serie,
       id_cliente: vehiculoSeleccionado.id_cliente,
-      kilometraje_ingreso: datosIngreso.kilometraje,
+      kilometraje_ingreso: Number (datosIngreso.kilometraje) || 0,
       estatus_orden: datosIngreso.estatusOrden,
-      total: datosConceptos.total
     }])
     .select()
     .single()
-
+    
   if (errOrden) throw errOrden
 
   const idOrdenGenerado = ordenGuardada.id_orden
 
   // Paso B: Insertar el Desglose de Conceptos (Servicios / Refacciones)
+  if (datosConceptos?.conceptos?.length > 0) {
   const conceptosAInsertar = datosConceptos.conceptos.map((c) => ({
     id_orden: idOrdenGenerado,
     descripcion: c.descripcion,
@@ -33,8 +33,10 @@ export async function guardarOrdenCompleta(vehiculoSeleccionado, datosIngreso, d
 
   if (errConceptos) throw errConceptos
 
+  }
+
   // Paso C: Subir Fotos de Evidencia a Supabase Storage (si existen)
-  if (fotos.length > 0) {
+  if (fotos?.length > 0) {
     for (const foto of fotos) {
       const fileExt = foto.file.name.split('.').pop()
       const fileName = `${idOrdenGenerado}/${foto.etiqueta}_${Date.now()}.${fileExt}`
