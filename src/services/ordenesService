@@ -9,6 +9,7 @@ export async function guardarOrdenCompleta(vehiculoSeleccionado, datosIngreso, d
       id_cliente: vehiculoSeleccionado.id_cliente,
       kilometraje_ingreso: Number (datosIngreso.kilometraje) || 0,
       estatus_orden: datosIngreso.estatusOrden,
+      fecha: datosIngreso.fecha || new Date().toISOString()
     }])
     .select()
     .single()
