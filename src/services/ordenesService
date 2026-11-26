@@ -6,7 +6,7 @@ export async function guardarOrdenCompleta(vehiculoSeleccionado, datosIngreso, d
   const usuarioActual = 
     datosIngreso?.usuarioRegistro ||
     authData?.user?.email ||
-    authData?,user.id
+    authData?.user.id
   
   if (!usuarioActual) {
     throw new Error('No se detectó un usuario autenticado para registrar la orden.')
