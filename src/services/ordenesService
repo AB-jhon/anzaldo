@@ -6,7 +6,7 @@ export async function guardarOrdenCompleta(vehiculoSeleccionado, datosIngreso, d
   const usuarioActual = 
     datosIngreso?.usuarioRegistro ||
     authData?.user?.email ||
-    authData?.user.id
+    authData?.user?.id
   
   if (!usuarioActual) {
     throw new Error('No se detectó un usuario autenticado para registrar la orden.')
@@ -17,9 +17,9 @@ export async function guardarOrdenCompleta(vehiculoSeleccionado, datosIngreso, d
     .from('ordenes_servicio')
     .insert([{
       vin_serie: vehiculoSeleccionado.vin_serie,
-      id_cliente: vehiculoSeleccionado.id_cliente,
+      id_cliente: vehiculoSeleccionado.id_cliente ?? null,
       kilometraje_ingreso: Number (datosIngreso.kilometraje) || 0,
-      estatus_orden: datosIngreso.estatusOrden,
+      estatus_orden: datosIngreso.estatusOrden || 'Pendiente',
       usuario_registro: usuarioActual
     }])
     .select()
@@ -31,13 +31,20 @@ export async function guardarOrdenCompleta(vehiculoSeleccionado, datosIngreso, d
 
   // Paso B: Insertar el Desglose de Conceptos (Servicios / Refacciones)
   if (datosConceptos?.conceptos?.length > 0) {
-  const conceptosAInsertar = datosConceptos.conceptos.map((c) => ({
-    id_orden: idOrdenGenerado,
-    descripcion: c.descripcion,
-    cantidad: Number(c.cantidad),
-    precio_unitario: Number(c.precio),
-    subtotal: Number(c.cantidad) * Number(c.precio)
-  }))
+  const conceptosAInsertar = datosConceptos.conceptos.map((c) => {
+    const cantidad = Math.max(1, Number(c.cantidad) || 1)
+    const precioUnitario = Math.max(0, Number(c.precio ?? c.precio_cobrado) || 0)
+    const descripcion = c.descripcion ?? c.descripcion_item ?? ''
+
+    return {
+      id_orden: idOrdenGenerado,
+      descripcion_item: descripcion,
+      cantidad,
+      precio_cobrado: precioUnitario,
+      subtotal: cantidad * precioUnitario
+    }
+    
+  })
 
   const { error: errConceptos } = await supabase
     .from('detalle_orden_precios')
@@ -63,15 +70,21 @@ export async function guardarOrdenCompleta(vehiculoSeleccionado, datosIngreso, d
         continue
       }
 
-      const { data:urlData } = supabase.storage
-      from('evidencias')
-      .getPublicUrl(fileName)
+      const { data: urlData } = supabase.storage
+        .from('evidencias')
+        .getPublicUrl(fileName)
 
-      await supabase.from('evidencias_orden').insert([{
-        id_orden: idOrdenGenerado,
-        url_foto: urlData.getPublicUrl,
-        etiqueta: foto.etiqueta || 'Recepción'
-      }])
+      const { error: errEvidencia } = await supabase
+        .from('evidencias_orden')
+        .insert([{
+          id_orden: idOrdenGenerado,
+          url_foto: urlData.publicUrl,
+          etiqueta: foto.etiqueta || 'Recepción'
+        }])
+      
+      if (errEvidencia) {
+        console.error('Error al registrar evidencia en BD:', errEvidencia.message)
+      }      
     }
   }
 
