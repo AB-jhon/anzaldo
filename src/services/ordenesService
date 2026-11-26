@@ -1,6 +1,17 @@
 import { supabase } from '../lib/supabaseClient'
 
 export async function guardarOrdenCompleta(vehiculoSeleccionado, datosIngreso, datosConceptos, fotos) {
+  // Obtener usuario autenticado para el registro de la orden
+  const { data: authData } = await supabase.auth.getUser ()
+  const usuarioActual = 
+    datosIngreso?.usuarioRegistro ||
+    authData?.user?.email ||
+    authData?,user.id
+  
+  if (!usuarioActual) {
+    throw new Error('No se detectó un usuario autenticado para registrar la orden.')
+  }
+
   // Paso A: Insertar Cabecera de la Orden
   const { data: ordenGuardada, error: errOrden } = await supabase
     .from('ordenes_servicio')
@@ -9,6 +20,7 @@ export async function guardarOrdenCompleta(vehiculoSeleccionado, datosIngreso, d
       id_cliente: vehiculoSeleccionado.id_cliente,
       kilometraje_ingreso: Number (datosIngreso.kilometraje) || 0,
       estatus_orden: datosIngreso.estatusOrden,
+      usuario_registro: usuarioActual
     }])
     .select()
     .single()
